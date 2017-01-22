@@ -1,15 +1,15 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'devise/feature_flags/version'
+require 'devise_feature_flags/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "devise-feature-flags"
-  spec.version       = Devise::FeatureFlags::VERSION
+  spec.version       = DeviseFeatureFlags::VERSION
   spec.authors       = ["Nicholas Thompson"]
   spec.email         = ["njt1982@gmail.com"]
 
-  spec.summary       = %q{Devise FeatureFlags provides a feature flagging for your site's users}
+  spec.summary       = %q{Devise Feature Flags provides a feature flagging for your site's users}
   spec.description   = %q{Include only specific users in your sites new features.}
   spec.homepage      = "https://github.com/njt1982/devise-feature-flags"
   spec.license       = "MIT"
