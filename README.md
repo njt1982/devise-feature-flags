@@ -1,5 +1,7 @@
 # Devise::Feature::Flags
 
+[![Build Status](https://travis-ci.org/njt1982/devise-feature-flags.svg?branch=master)](https://travis-ci.org/njt1982/devise-feature-flags)
+
 Devise FeatureFlags provides a feature flagging for your site's users
 
 ## Installation
