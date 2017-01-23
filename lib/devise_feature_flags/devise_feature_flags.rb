@@ -1,4 +1,5 @@
-require "devise_feature_flags/version"
+require 'devise_feature_flags/version'
+require 'devise_feature_flags/models/devise_feature_flag'
 require 'active_record'
 require 'devise'
 
@@ -14,4 +15,4 @@ module DeviseFeatureFlags
   end
 end
 
-Devise.add_module :devise_feature_flags, :model => 'devise_feature_flags/model'
+Devise.add_module :devise_feature_flags#, :model => 'devise_feature_flags/models/devise_feature_flag'

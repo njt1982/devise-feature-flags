@@ -1,19 +1,8 @@
 require 'spec_helper'
 require 'generators/devise_feature_flags/templates/migration'
 
-# Dont output the ActiveRecord Migration logging during tests.
-ActiveRecord::Migration.verbose = false
-
-# Unremark me if you need to see SQL Query logs during testing (for debugging purposes)
-# ActiveRecord::Base.logger = Logger.new(STDOUT) if defined?(ActiveRecord::Base)
-
 
 RSpec.describe 'Active Record Integration' do
-
-  before(:all) do
-    ActiveRecord::Base.establish_connection(adapter: 'sqlite3',
-                                            database: ':memory:')
-  end
 
   before(:each) do
     CreateDeviseFeatureFlagsTables.up
@@ -25,36 +14,65 @@ RSpec.describe 'Active Record Integration' do
 
 
   context 'Features' do
+    let(:feature_key) { 'test' }
+    let(:feature) { DeviseFeatureFlags::Feature.create key: feature_key }
+
     it 'Can create a Feature' do
-      expect { DeviseFeatureFlags::Feature.create key: 'test' }.to change(DeviseFeatureFlags::Feature, :count).by 1
-    end
-  end
-
-
-  context 'Users' do
-    let(:feature) { DeviseFeatureFlags::Feature.create key: 'test' }
-
-    it 'Can create a User' do
-      expect {
-        DeviseFeatureFlags::FeatureUser.create feature_flag_key: 'test', user_id: 0
-      }.to change(DeviseFeatureFlags::FeatureUser, :count).by 1
+      expect { feature }.to change(DeviseFeatureFlags::Feature, :count).by 1
     end
 
-    it 'Can create a User via the Feature relationship' do
-      expect {
-        feature.feature_users.create user_id: 0
-      }.to change(DeviseFeatureFlags::FeatureUser, :count).by 1
-    end
+    context 'FeatureUsers' do
+      let(:user) { User.create name: 'Joe Bloggs', email: 'joe@example.com', role: 'admin' }
+      let(:feature_user) { DeviseFeatureFlags::FeatureUser.create feature_flag_key: feature.key, user_id: user.id }
 
-    it 'Creating a user changes the feature users count' do
-      expect {
-        feature.feature_users.create user_id: 0
-      }.to change(feature.feature_users, :count).from(0).to(1)
-    end
+      it 'Can create a User' do
+        expect { feature_user }.to change(DeviseFeatureFlags::FeatureUser, :count).by 1
+      end
 
-    it 'A user can reference its feature correctly' do
-      user = DeviseFeatureFlags::FeatureUser.create feature_flag_key: feature.key, user_id: 0
-      expect(user.feature).to eq feature
+      it 'Can create a User via the Feature relationship' do
+        expect {
+          feature.feature_users.create user_id: user.id
+        }.to change(DeviseFeatureFlags::FeatureUser, :count).by 1
+      end
+
+      it 'Creating a user changes the feature users count' do
+        expect {
+          feature.feature_users.create user_id: user.id
+        }.to change(feature.feature_users, :count).from(0).to(1)
+      end
+
+      it 'A user can reference its feature correctly' do
+        expect(feature_user.feature).to eq feature
+      end
+
+      context 'Users' do
+        # Trigger feature_user (and therefore feature and user) to exist before running each test.
+        before(:each) { feature_user }
+        it 'can get feature users a user has' do
+          expect(user.feature_flag_users).to include feature_user
+        end
+
+        it 'can get features a user has' do
+          expect(user.feature_flag_features).to include feature
+        end
+
+        it 'can check if a user has a feature' do
+          expect(user.has_feature_flag(feature_key)).to eq true
+        end
+
+        it 'can check if a user doest not have a non-existent feature' do
+          expect(user.has_feature_flag('wibble')).to eq false
+        end
+
+        it 'can disable a feature flag on a user' do
+          expect { user.disable_feature_flag(feature_key) }.to change { user.has_feature_flag(feature_key) }.from(true).to(false)
+        end
+
+        it 'can enable a new feature on a user' do
+          DeviseFeatureFlags::Feature.create key: 'new_feature'
+          expect { user.enable_feature_flag('new_feature') }.to change { user.has_feature_flag('new_feature') }.from(false).to(true)
+        end
+      end
     end
   end
 end
